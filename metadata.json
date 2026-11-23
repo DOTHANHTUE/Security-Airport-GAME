@@ -1,0 +1,6 @@
+{
+  "name": "AeroGuard: An Ninh Soi Chiếu",
+  "description": "Trò chơi mô phỏng cán bộ an ninh hàng không soi chiếu hành lý X-ray tại sân bay quốc tế, phát hiện vật phẩm nguy hiểm và xếp hạng trên bảng xếp hạng toàn cầu.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

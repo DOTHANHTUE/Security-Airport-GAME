@@ -1,0 +1,142 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isValidLeaderboardEntry(data) {
+      return data.keys().hasAll([
+        'uid',
+        'officerName',
+        'officerRank',
+        'bestScore',
+        'highestLevel',
+        'bestAccuracy',
+        'totalContrabandCaught',
+        'achievementsCount',
+        'isPublic',
+        'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'uid',
+        'officerName',
+        'officerRank',
+        'bestScore',
+        'highestLevel',
+        'bestAccuracy',
+        'totalContrabandCaught',
+        'achievementsCount',
+        'isPublic',
+        'updatedAt'
+      ]) &&
+      data.uid is string && isValidId(data.uid) && data.uid == request.auth.uid &&
+      data.officerName is string && data.officerName.size() >= 1 && data.officerName.size() <= 40 &&
+      data.officerRank is string && data.officerRank.size() >= 1 && data.officerRank.size() <= 40 &&
+      data.bestScore is number && data.bestScore >= 0 && data.bestScore <= 10000000 &&
+      data.highestLevel is number && data.highestLevel >= 1 && data.highestLevel <= 99 &&
+      data.bestAccuracy is number && data.bestAccuracy >= 0 && data.bestAccuracy <= 100 &&
+      data.totalContrabandCaught is number && data.totalContrabandCaught >= 0 && data.totalContrabandCaught <= 1000000 &&
+      data.achievementsCount is number && data.achievementsCount >= 0 && data.achievementsCount <= 30 &&
+      data.isPublic is bool && data.isPublic == true &&
+      data.updatedAt == request.time;
+    }
+
+    function isValidScreeningRun(data) {
+      return data.keys().hasAll([
+        'uid',
+        'score',
+        'levelReached',
+        'accuracy',
+        'bagsProcessed',
+        'contrabandCaught',
+        'falseAlarms',
+        'missedThreats',
+        'durationSec',
+        'rankTitle',
+        'achievementsEarned',
+        'createdAt'
+      ]) &&
+      data.keys().hasOnly([
+        'uid',
+        'score',
+        'levelReached',
+        'accuracy',
+        'bagsProcessed',
+        'contrabandCaught',
+        'falseAlarms',
+        'missedThreats',
+        'durationSec',
+        'rankTitle',
+        'achievementsEarned',
+        'createdAt'
+      ]) &&
+      data.uid is string && isValidId(data.uid) && data.uid == request.auth.uid &&
+      data.score is number && data.score >= 0 && data.score <= 10000000 &&
+      data.levelReached is number && data.levelReached >= 1 && data.levelReached <= 99 &&
+      data.accuracy is number && data.accuracy >= 0 && data.accuracy <= 100 &&
+      data.bagsProcessed is number && data.bagsProcessed >= 0 && data.bagsProcessed <= 5000 &&
+      data.contrabandCaught is number && data.contrabandCaught >= 0 && data.contrabandCaught <= 5000 &&
+      data.falseAlarms is number && data.falseAlarms >= 0 && data.falseAlarms <= 5000 &&
+      data.missedThreats is number && data.missedThreats >= 0 && data.missedThreats <= 5000 &&
+      data.durationSec is number && data.durationSec >= 0 && data.durationSec <= 86400 &&
+      data.rankTitle is string && data.rankTitle.size() >= 1 && data.rankTitle.size() <= 40 &&
+      data.achievementsEarned is list && data.achievementsEarned.size() <= 20 &&
+      (data.achievementsEarned.size() == 0 || (data.achievementsEarned[0] is string && data.achievementsEarned[0].size() <= 64)) &&
+      data.createdAt == request.time;
+    }
+
+    match /leaderboard/{uid} {
+      allow get: if isValidId(uid) && existing().isPublic == true;
+      allow list: if resource.data.bestScore >= 0;
+      allow create: if isVerified() && isValidId(uid) && uid == request.auth.uid && isValidLeaderboardEntry(incoming());
+      allow update: if isVerified() &&
+        isValidId(uid) &&
+        uid == request.auth.uid &&
+        isValidLeaderboardEntry(incoming()) &&
+        incoming().uid == existing().uid &&
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'officerName',
+          'officerRank',
+          'bestScore',
+          'highestLevel',
+          'bestAccuracy',
+          'totalContrabandCaught',
+          'achievementsCount',
+          'isPublic',
+          'updatedAt'
+        ]);
+      allow delete: if false;
+    }
+
+    match /users/{uid}/runs/{runId} {
+      allow get: if isVerified() && isValidId(uid) && isValidId(runId) && uid == request.auth.uid;
+      allow list: if isVerified() && isValidId(uid) && uid == request.auth.uid && resource.data.uid == request.auth.uid;
+      allow create: if isVerified() && isValidId(uid) && isValidId(runId) && uid == request.auth.uid && isValidScreeningRun(incoming());
+      allow update: if false;
+      allow delete: if false;
+    }
+  }
+}

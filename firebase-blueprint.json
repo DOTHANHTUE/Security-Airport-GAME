@@ -1,0 +1,160 @@
+{
+  "entities": {
+    "LeaderboardEntry": {
+      "title": "LeaderboardEntry",
+      "description": "Public player high score and aviation security rank on the global leaderboard (no PII stored).",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID of the player.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "officerName": {
+          "type": "string",
+          "description": "Public officer callsign / display name shown on the global leaderboard.",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "officerRank": {
+          "type": "string",
+          "description": "Current aviation security officer rank title.",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "bestScore": {
+          "type": "number",
+          "description": "Highest total score achieved across all shifts."
+        },
+        "highestLevel": {
+          "type": "number",
+          "description": "Highest airport terminal level reached."
+        },
+        "bestAccuracy": {
+          "type": "number",
+          "description": "Best accuracy percentage (0 to 100)."
+        },
+        "totalContrabandCaught": {
+          "type": "number",
+          "description": "Cumulative count of dangerous items intercepted."
+        },
+        "achievementsCount": {
+          "type": "number",
+          "description": "Total number of unlocked service medals."
+        },
+        "isPublic": {
+          "type": "boolean",
+          "description": "Flag enabling global leaderboard visibility."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of the latest leaderboard update."
+        }
+      },
+      "required": [
+        "uid",
+        "officerName",
+        "officerRank",
+        "bestScore",
+        "highestLevel",
+        "bestAccuracy",
+        "totalContrabandCaught",
+        "achievementsCount",
+        "isPublic",
+        "updatedAt"
+      ]
+    },
+    "ScreeningRun": {
+      "title": "ScreeningRun",
+      "description": "Individual shift completion record owned privately by the player.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "score": {
+          "type": "number",
+          "description": "Total score earned in this run."
+        },
+        "levelReached": {
+          "type": "number",
+          "description": "Terminal level reached."
+        },
+        "accuracy": {
+          "type": "number",
+          "description": "Accuracy percentage (0 to 100)."
+        },
+        "bagsProcessed": {
+          "type": "number",
+          "description": "Total luggage screened in the run."
+        },
+        "contrabandCaught": {
+          "type": "number",
+          "description": "Dangerous items intercepted."
+        },
+        "falseAlarms": {
+          "type": "number",
+          "description": "Harmless bags mistakenly detained."
+        },
+        "missedThreats": {
+          "type": "number",
+          "description": "Dangerous items mistakenly cleared."
+        },
+        "durationSec": {
+          "type": "number",
+          "description": "Total active screening duration in seconds."
+        },
+        "rankTitle": {
+          "type": "string",
+          "description": "Grade or officer rank awarded for the run.",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "achievementsEarned": {
+          "type": "array",
+          "description": "List of medal IDs unlocked up to this run (max 20)."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the run was recorded."
+        }
+      },
+      "required": [
+        "uid",
+        "score",
+        "levelReached",
+        "accuracy",
+        "bagsProcessed",
+        "contrabandCaught",
+        "falseAlarms",
+        "missedThreats",
+        "durationSec",
+        "rankTitle",
+        "achievementsEarned",
+        "createdAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/leaderboard/{uid}": {
+      "schema": {
+        "$ref": "#/entities/LeaderboardEntry"
+      },
+      "description": "Public global leaderboard entries keyed by user UID."
+    },
+    "/users/{uid}/runs/{runId}": {
+      "schema": {
+        "$ref": "#/entities/ScreeningRun"
+      },
+      "description": "Private personal history of completed airport security screening shifts."
+    }
+  }
+}
